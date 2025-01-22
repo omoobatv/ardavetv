@@ -8,212 +8,142 @@
     See LICENSES/GPL-2.0-only for more information.
 """
 
+from __future__ import absolute_import, division, unicode_literals
+
+import json
 import os
-import copy
-import re
-from urllib.parse import quote
+import shutil
+from datetime import timedelta
+from math import floor, log
+from re import (
+    compile as re_compile,
+)
 
-from ..constants import localize
-
-import xbmc
-import xbmcvfs
+from ..compatibility import byte_string_type, string_type, xbmc, xbmcvfs
+from ..logger import Logger
 
 
-__all__ = ['create_path', 'create_uri_path', 'strip_html_from_text', 'print_items', 'find_best_fit', 'to_utf8',
-           'to_str', 'to_unicode', 'select_stream', 'make_dirs', 'loose_version', 'find_video_id']
-
-try:
-    xbmc.translatePath = xbmcvfs.translatePath
-except AttributeError:
-    pass
+__all__ = (
+    'duration_to_seconds',
+    'find_video_id',
+    'friendly_number',
+    'get_kodi_setting_bool',
+    'get_kodi_setting_value',
+    'jsonrpc',
+    'loose_version',
+    'make_dirs',
+    'merge_dicts',
+    'print_items',
+    'redact_auth',
+    'redact_ip',
+    'rm_dir',
+    'seconds_to_duration',
+    'select_stream',
+    'strip_html_from_text',
+    'to_unicode',
+    'wait',
+)
 
 
 def loose_version(v):
-    filled = []
-    for point in v.split("."):
-        filled.append(point.zfill(8))
-    return tuple(filled)
-
-
-def to_str(text):
-    if isinstance(text, bytes):
-        return text.decode('utf-8', 'ignore')
-    return text
-
-
-def to_utf8(text):
-    result = text
-    if isinstance(text, str):
-        try:
-            result = text.encode('utf-8', 'ignore')
-        except UnicodeDecodeError:
-            pass
-
-    return result
+    return [point.zfill(8) for point in v.split('.')]
 
 
 def to_unicode(text):
-    result = text
-    if isinstance(text, str) or isinstance(text, bytes):
+    if isinstance(text, byte_string_type):
         try:
-            result = text.decode('utf-8', 'ignore')
-        except (AttributeError, UnicodeEncodeError):
+            return text.decode('utf-8', 'ignore')
+        except UnicodeError:
             pass
-
-    return result
-
-
-def find_best_fit(data, compare_method=None):
-    try:
-        return next(item for item in data if item['container'] == 'mpd')
-    except StopIteration:
-        pass
-
-    result = None
-
-    last_fit = -1
-    if isinstance(data, dict):
-        for key in list(data.keys()):
-            item = data[key]
-            fit = abs(compare_method(item))
-            if last_fit == -1 or fit < last_fit:
-                last_fit = fit
-                result = item
-    elif isinstance(data, list):
-        for item in data:
-            fit = abs(compare_method(item))
-            if last_fit == -1 or fit < last_fit:
-                last_fit = fit
-                result = item
-
-    return result
+    return text
 
 
-def select_stream(context, stream_data_list, quality_map_override=None, ask_for_quality=None, audio_only=None):
-    # sort - best stream first
-    def _sort_stream_data(_stream_data):
-        return _stream_data.get('sort', (0, 0))
-
+def select_stream(context,
+                  stream_data_list,
+                  ask_for_quality,
+                  audio_only,
+                  use_mpd=True):
     settings = context.get_settings()
-    use_adaptive = context.use_inputstream_adaptive()
-    ask_for_quality = context.get_settings().ask_for_video_quality() if ask_for_quality is None else ask_for_quality
-    video_quality = settings.get_video_quality(quality_map_override=quality_map_override)
-    audio_only = audio_only if audio_only is not None else settings.audio_only()
-    adaptive_live = settings.use_adaptive_live_streams() and context.inputstream_adaptive_capabilities('live')
-
-    if not ask_for_quality:
-        stream_data_list = [item for item in stream_data_list
-                            if (item['container'] not in {'mpd', 'hls'} or
-                                item.get('hls/video') or
-                                item.get('dash/video'))]
-
-    if not ask_for_quality and audio_only:  # check for live stream, audio only not supported
-        context.log_debug('Select stream: Audio only')
-        for item in stream_data_list:
-            if item.get('Live', False):
-                context.log_debug('Select stream: Live stream, audio only not available')
-                audio_only = False
-                break
-
-    if not ask_for_quality and audio_only:
-        audio_stream_data_list = [item for item in stream_data_list
-                                  if (item.get('dash/audio') and
-                                      not item.get('dash/video') and
-                                      not item.get('hls/video'))]
-
-        if audio_stream_data_list:
-            use_adaptive = False
-            stream_data_list = audio_stream_data_list
-        else:
-            context.log_debug('Select stream: Audio only, no audio only streams found')
-
-    if not adaptive_live:
-        stream_data_list = [item for item in stream_data_list
-                            if (item['container'] != 'mpd' or
-                                not item.get('Live'))]
-    elif not use_adaptive:
-        stream_data_list = [item for item in stream_data_list
-                            if item['container'] != 'mpd']
-
-    def _find_best_fit_video(_stream_data):
-        if audio_only:
-            return video_quality - _stream_data.get('sort', (0, 0))[0]
-        else:
-            return video_quality - _stream_data.get('video', {}).get('height', 0)
-
-    sorted_stream_data_list = sorted(stream_data_list, key=_sort_stream_data)
-
-    context.log_debug('selectable streams: %d' % len(sorted_stream_data_list))
-    log_streams = list()
-    for sorted_stream_data in sorted_stream_data_list:
-        log_data = copy.deepcopy(sorted_stream_data)
-        if 'license_info' in log_data:
-            log_data['license_info']['url'] = '[not shown]' if log_data['license_info'].get('url') else None
-            log_data['license_info']['token'] = '[not shown]' if log_data['license_info'].get('token') else None
-        else:
-            log_data['url'] = re.sub(r'ip=\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}', 'ip=xxx.xxx.xxx.xxx', log_data['url'])
-        log_streams.append(log_data)
-    context.log_debug('selectable streams: \n%s' % '\n'.join(str(stream) for stream in log_streams))
-
-    selected_stream_data = None
-    if ask_for_quality and len(sorted_stream_data_list) > 1:
-        items = list()
-        for sorted_stream_data in sorted_stream_data_list:
-            items.append((sorted_stream_data['title'], sorted_stream_data))
-
-        result = context.get_ui().on_select(context.localize(localize.SELECT_VIDEO_QUALITY), items)
-        if result != -1:
-            selected_stream_data = result
+    if settings.use_isa():
+        isa_capabilities = context.inputstream_adaptive_capabilities()
+        use_adaptive = bool(isa_capabilities)
+        use_live_adaptive = use_adaptive and 'live' in isa_capabilities
+        use_live_mpd = use_live_adaptive and settings.use_mpd_live_streams()
     else:
-        selected_stream_data = find_best_fit(sorted_stream_data_list, _find_best_fit_video)
+        use_adaptive = False
+        use_live_adaptive = False
+        use_live_mpd = False
 
-    if selected_stream_data is not None:
-        log_data = copy.deepcopy(selected_stream_data)
+    if audio_only:
+        context.log_debug('Select stream - Audio only')
+        stream_list = [item for item in stream_data_list
+                       if 'video' not in item]
+    else:
+        stream_list = [
+            item for item in stream_data_list
+            if (not item.get('adaptive')
+                or (not item.get('live')
+                    and ((use_mpd and item.get('dash/video'))
+                         or (use_adaptive and item.get('hls/video'))))
+                or (item.get('live')
+                    and ((use_live_mpd and item.get('dash/video'))
+                         or (use_live_adaptive and item.get('hls/video')))))
+        ]
+
+    if not stream_list:
+        context.log_debug('Select stream - No streams found')
+        return None
+
+    def _stream_sort(_stream):
+        return _stream.get('sort', [0, 0, 0])
+
+    stream_list.sort(key=_stream_sort, reverse=True)
+    num_streams = len(stream_list)
+    ask_for_quality = ask_for_quality and num_streams >= 1
+    context.log_debug('Available streams: {0}'.format(num_streams))
+
+    for idx, stream in enumerate(stream_list):
+        log_data = stream.copy()
+
         if 'license_info' in log_data:
-            log_data['license_info']['url'] = '[not shown]' if log_data['license_info'].get('url') else None
-            log_data['license_info']['token'] = '[not shown]' if log_data['license_info'].get('token') else None
-        context.log_debug('selected stream: %s' % log_data)
+            license_info = log_data['license_info'].copy()
+            for detail in ('url', 'token'):
+                original_value = license_info.get(detail)
+                if original_value:
+                    license_info[detail] = '<redacted>'
+            log_data['license_info'] = license_info
 
-    return selected_stream_data
+        original_value = log_data.get('url')
+        if original_value:
+            log_data['url'] = redact_ip(original_value)
 
+        context.log_debug('Stream {idx}:'
+                          '\n\t{stream_details}'
+                          .format(idx=idx, stream_details=log_data))
 
-def create_path(*args):
-    comps = []
-    for arg in args:
-        if isinstance(arg, list):
-            return create_path(*arg)
+    if ask_for_quality:
+        selected_stream = context.get_ui().on_select(
+            context.localize('select_video_quality'),
+            [stream['title'] for stream in stream_list],
+        )
+        if selected_stream == -1:
+            context.log_debug('Select stream - No stream selected')
+            return None
+    else:
+        selected_stream = 0
 
-        comps.append(str(arg.strip('/').replace('\\', '/').replace('//', '/')))
-
-    uri_path = '/'.join(comps)
-    if uri_path:
-        return u'/%s/' % uri_path
-
-    return '/'
-
-
-def create_uri_path(*args):
-    comps = []
-    for arg in args:
-        if isinstance(arg, list):
-            return create_uri_path(*arg)
-
-        comps.append(str(arg.strip('/').replace('\\', '/').replace('//', '/')))
-
-    uri_path = '/'.join(comps)
-    if uri_path:
-        return quote('/%s/' % uri_path)
-
-    return '/'
+    context.log_debug('Selected stream: Stream {0}'.format(selected_stream))
+    return stream_list[selected_stream]
 
 
-def strip_html_from_text(text):
+def strip_html_from_text(text, tag_re=re_compile('<[^<]+?>')):
     """
     Removes html tags
     :param text: html text
+    :param tag_re: RE pattern object used to match html tags
     :return:
     """
-    return re.sub('<[^<]+?>', '', text)
+    return tag_re.sub('', text)
 
 
 def print_items(items):
@@ -231,25 +161,169 @@ def print_items(items):
 
 def make_dirs(path):
     if not path.endswith('/'):
-        path = ''.join([path, '/'])
-    path = xbmc.translatePath(path)
-    if not xbmcvfs.exists(path):
+        path = ''.join((path, '/'))
+    path = xbmcvfs.translatePath(path)
+
+    succeeded = xbmcvfs.exists(path) or xbmcvfs.mkdirs(path)
+    if succeeded:
+        return path
+
+    try:
+        os.makedirs(path)
+        succeeded = True
+    except OSError:
+        succeeded = xbmcvfs.exists(path)
+
+    if succeeded:
+        return path
+    Logger.log_error('utils.make_dirs - Failed to create directory'
+                     '\n\tPath: {path}'.format(path=path))
+    return False
+
+
+def rm_dir(path):
+    if not path.endswith('/'):
+        path = ''.join((path, '/'))
+    path = xbmcvfs.translatePath(path)
+
+    succeeded = (not xbmcvfs.exists(path)
+                 or xbmcvfs.rmdir(path, force=True))
+    if not succeeded:
         try:
-            _ = xbmcvfs.mkdirs(path)
-        except:
+            shutil.rmtree(path)
+        except OSError:
             pass
-        if not xbmcvfs.exists(path):
-            try:
-                os.makedirs(path)
-            except:
-                pass
-        return xbmcvfs.exists(path)
+        succeeded = not xbmcvfs.exists(path)
 
-    return True
+    if succeeded:
+        return True
+    Logger.log_error('utils.rm_dir - Failed to remove directory'
+                     '\n\tPath: {path}'.format(path=path))
+    return False
 
 
-def find_video_id(plugin_path):
-    match = re.search(r'.*video_id=(?P<video_id>[a-zA-Z0-9_\-]{11}).*', plugin_path)
+def find_video_id(plugin_path,
+                  video_id_re=re_compile(
+                      r'.*video_id=(?P<video_id>[a-zA-Z0-9_\-]{11}).*'
+                  )):
+    match = video_id_re.search(plugin_path)
     if match:
         return match.group('video_id')
     return ''
+
+
+def friendly_number(value, precision=3, scale=('', 'K', 'M', 'B'), as_str=True):
+    value = float('{value:.{precision}g}'.format(
+        value=float(value),
+        precision=precision,
+    ))
+    abs_value = abs(value)
+    magnitude = 0 if abs_value < 1000 else int(log(floor(abs_value), 1000))
+    output = '{output:f}'.format(
+        output=value / 1000 ** magnitude
+    ).rstrip('0').rstrip('.') + scale[magnitude]
+    return output if as_str else (output, value)
+
+
+def duration_to_seconds(duration,
+                        periods_seconds_map={
+                            '': 1,       # 1 second for unitless period
+                            's': 1,      # 1 second
+                            'm': 60,     # 1 minute
+                            'h': 3600,   # 1 hour
+                            'd': 86400,  # 1 day
+                        },
+                        periods_re=re_compile(r'([\d.]+)(d|h|m|s|$)')):
+    if ':' in duration:
+        seconds = 0
+        for part in duration.split(':'):
+            seconds = seconds * 60 + (float(part) if '.' in part else int(part))
+        return seconds
+    return sum(
+        (float(number) if '.' in number else int(number))
+        * periods_seconds_map.get(period, 1)
+        for number, period in periods_re.findall(duration.lower())
+    )
+
+
+def seconds_to_duration(seconds):
+    return str(timedelta(seconds=seconds))
+
+
+def merge_dicts(item1, item2, templates=None, compare_str=False, _=Ellipsis):
+    if not isinstance(item1, dict) or not isinstance(item2, dict):
+        if (compare_str
+                and isinstance(item1, string_type)
+                and isinstance(item2, string_type)):
+            return item1 if len(item1) > len(item2) else item2
+        return (
+            item1 if item2 is _ else
+            _ if (item1 is KeyError or item2 is KeyError) else
+            item2
+        )
+    new = {}
+    keys = set(item1)
+    keys.update(item2)
+    for key in keys:
+        value = merge_dicts(item1.get(key, _), item2.get(key, _), templates)
+        if value is _:
+            continue
+        if (templates is not None
+                and isinstance(value, string_type) and '{' in value):
+            templates['{0}.{1}'.format(id(new), key)] = (new, key, value)
+        new[key] = value
+    return new or _
+
+
+def get_kodi_setting_value(setting, process=None):
+    response = jsonrpc(method='Settings.GetSettingValue',
+                       params={'setting': setting})
+    try:
+        value = response['result']['value']
+        if process:
+            return process(value)
+    except (KeyError, TypeError, ValueError):
+        return None
+    return value
+
+
+def get_kodi_setting_bool(setting):
+    return xbmc.getCondVisibility(setting.join(('System.GetBool(', ')')))
+
+
+def jsonrpc(batch=None, **kwargs):
+    """
+    Perform JSONRPC calls
+    """
+
+    if not batch and not kwargs:
+        return None
+
+    do_response = False
+    for request_id, kwargs in enumerate(batch or (kwargs,)):
+        do_response = (not kwargs.pop('no_response', False)) or do_response
+        if do_response and 'id' not in kwargs:
+            kwargs['id'] = request_id
+        kwargs['jsonrpc'] = '2.0'
+
+    request = json.dumps(batch or kwargs, default=tuple, ensure_ascii=False)
+    response = xbmc.executeJSONRPC(request)
+    return json.loads(response) if do_response else None
+
+
+def wait(timeout=None):
+    if not timeout:
+        timeout = 0
+    elif timeout < 0:
+        timeout = 0.1
+    return xbmc.Monitor().waitForAbort(timeout)
+
+
+def redact_ip(url,
+              ip_re=re_compile(r'([?&/]|%3F|%26|%2F)ip([=/]|%3D|%2F)[^?&/%]+')):
+    return ip_re.sub(r'\g<1>ip\g<2><redacted>', url)
+
+
+def redact_auth(header_string,
+                ip_re=re_compile(r'"Authorization": "[^"]+"')):
+    return ip_re.sub(r'"Authorization": "<redacted>"', header_string)

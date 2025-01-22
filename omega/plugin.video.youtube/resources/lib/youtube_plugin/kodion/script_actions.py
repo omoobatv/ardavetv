@@ -10,30 +10,41 @@
 from __future__ import absolute_import, division, unicode_literals
 
 import os
-import socket
 
-from .compatibility import parse_qsl, xbmc, xbmcaddon, xbmcvfs
-from .constants import DATA_PATH, TEMP_PATH
+from .compatibility import parse_qsl, urlsplit, xbmc, xbmcaddon, xbmcvfs
+from .constants import (
+    DATA_PATH,
+    DEFAULT_LANGUAGES,
+    DEFAULT_REGIONS,
+    RELOAD_ACCESS_MANAGER,
+    SERVER_WAKEUP,
+    TEMP_PATH,
+    WAIT_END_FLAG,
+)
 from .context import XbmcContext
-from .network import get_client_ip_address, is_httpd_live
+from .network import (
+    Locator,
+    get_client_ip_address,
+    get_listen_addresses,
+    httpd_status,
+)
 from .utils import rm_dir
+from ..youtube import Provider
 
 
-def _config_actions(action, *_args):
-    context = XbmcContext()
+def _config_actions(context, action, *_args):
     localize = context.localize
     settings = context.get_settings()
     ui = context.get_ui()
 
     if action == 'youtube':
         xbmcaddon.Addon().openSettings()
-        xbmc.executebuiltin('Container.Refresh')
 
     elif action == 'isa':
-        if context.use_inputstream_adaptive():
-            xbmcaddon.Addon(id='inputstream.adaptive').openSettings()
+        if context.use_inputstream_adaptive(prompt=True):
+            xbmcaddon.Addon('inputstream.adaptive').openSettings()
         else:
-            settings.set_bool('kodion.video.quality.isa', False)
+            settings.use_isa(False)
 
     elif action == 'inputstreamhelper':
         try:
@@ -43,36 +54,46 @@ def _config_actions(action, *_args):
             xbmc.executebuiltin('InstallAddon(script.module.inputstreamhelper)')
 
     elif action == 'subtitles':
-        language = settings.get_string('youtube.language', 'en-US')
-        sub_setting = settings.subtitle_languages()
+        kodi_sub_lang = context.get_subtitle_language()
+        plugin_lang = settings.get_language()
+        sub_selection = settings.get_subtitle_selection()
+
+        if not kodi_sub_lang:
+            preferred = (plugin_lang,)
+        elif kodi_sub_lang.partition('-')[0] != plugin_lang.partition('-')[0]:
+            preferred = (kodi_sub_lang, plugin_lang)
+        else:
+            preferred = (kodi_sub_lang,)
+
+        fallback = ('ASR' if preferred[0].startswith('en') else
+                    context.get_language_name('en'))
+        preferred = '/'.join(map(context.get_language_name, preferred))
+        preferred_no_asr = '%s (%s)' % (preferred, localize('subtitles.no_asr'))
 
         sub_opts = [
             localize('none'),
-            localize('prompt'),
-            (localize('subtitles.with_fallback') % (
-                ('en', 'en-US/en-GB') if language.startswith('en') else
-                (language, 'en')
-            )),
-            language,
-            '%s (%s)' % (language, localize('subtitles.no_auto_generated')),
+            localize('select'),
+            localize('subtitles.with_fallback') % (preferred, fallback),
+            localize('subtitles.with_fallback') % (preferred_no_asr, fallback),
+            preferred_no_asr,
         ]
 
         if settings.use_mpd_videos():
             sub_opts.append(localize('subtitles.all'))
-        elif sub_setting == 5:
-            sub_setting = 0
-            settings.set_subtitle_languages(sub_setting)
+        elif sub_selection == 5:
+            sub_selection = 0
+            settings.set_subtitle_selection(sub_selection)
 
-        sub_opts[sub_setting] = ui.bold(sub_opts[sub_setting])
+        sub_opts[sub_selection] = ui.bold(sub_opts[sub_selection])
 
         result = ui.on_select(localize('subtitles.language'),
                               sub_opts,
-                              preselect=sub_setting)
+                              preselect=sub_selection)
         if result > -1:
-            sub_setting = result
-            settings.set_subtitle_languages(sub_setting)
+            sub_selection = result
+            settings.set_subtitle_selection(sub_selection)
 
-        if not sub_setting or sub_setting == 5:
+        if not sub_selection or sub_selection == 5:
             settings.set_subtitle_download(False)
         else:
             result = ui.on_yes_no_input(
@@ -83,20 +104,15 @@ def _config_actions(action, *_args):
                 settings.set_subtitle_download(result == 1)
 
     elif action == 'listen_ip':
-        local_ranges = ('10.', '172.16.', '192.168.')
-        addresses = [iface[4][0]
-                     for iface in socket.getaddrinfo(socket.gethostname(), None)
-                     if iface[4][0].startswith(local_ranges)]
-        addresses += ['127.0.0.1', '0.0.0.0']
+        addresses = get_listen_addresses()
         selected_address = ui.on_select(localize('select.listen.ip'), addresses)
         if selected_address != -1:
-            settings.set_httpd_listen(addresses[selected_address])
+            settings.httpd_listen(addresses[selected_address])
 
     elif action == 'show_client_ip':
-        port = settings.httpd_port()
-
-        if is_httpd_live(port=port):
-            client_ip = get_client_ip_address(port=port)
+        context.wakeup(SERVER_WAKEUP, timeout=5)
+        if httpd_status(context):
+            client_ip = get_client_ip_address(context)
             if client_ip:
                 ui.on_ok(context.get_name(),
                          context.localize('client.ip') % client_ip)
@@ -105,82 +121,225 @@ def _config_actions(action, *_args):
         else:
             ui.show_notification(context.localize('httpd.not.running'))
 
+    elif action == 'geo_location':
+        locator = Locator(context)
+        locator.locate_requester()
+        coords = locator.coordinates()
+        if coords:
+            context.get_settings().set_location(
+                '{0[lat]},{0[lon]}'.format(coords)
+            )
 
-def _maintenance_actions(action, target):
-    context = XbmcContext()
+    elif action == 'language_region':
+        client = Provider().get_client(context)
+        settings = context.get_settings()
+
+        plugin_language = settings.get_language()
+        plugin_region = settings.get_region()
+
+        kodi_language = context.get_language()
+        base_kodi_language = kodi_language.partition('-')[0]
+
+        json_data = client.get_supported_languages(kodi_language)
+        items = json_data.get('items') or DEFAULT_LANGUAGES['items']
+
+        selected_language = [None]
+
+        def _get_selected_language(item):
+            item_lang = item[1]
+            base_item_lang = item_lang.partition('-')[0]
+            if item_lang == kodi_language or item_lang == plugin_language:
+                selected_language[0] = item
+            elif (not selected_language[0]
+                  and base_item_lang == base_kodi_language):
+                selected_language.append(item)
+            return item
+
+        # Ignore es-419 as it causes hl not a valid language error
+        # https://github.com/jdf76/plugin.video.youtube/issues/418
+        invalid_ids = ('es-419',)
+        language_list = sorted([
+            (item['snippet']['name'], item['snippet']['hl'])
+            for item in items
+            if item['id'] not in invalid_ids
+        ], key=_get_selected_language)
+
+        if selected_language[0]:
+            selected_language = language_list.index(selected_language[0])
+        elif len(selected_language) > 1:
+            selected_language = language_list.index(selected_language[1])
+        else:
+            selected_language = None
+
+        language_id = ui.on_select(
+            localize('setup_wizard.locale.language'),
+            language_list,
+            preselect=selected_language
+        )
+        if language_id == -1:
+            return
+
+        json_data = client.get_supported_regions(language=language_id)
+        items = json_data.get('items') or DEFAULT_REGIONS['items']
+
+        selected_region = [None]
+
+        def _get_selected_region(item):
+            item_region = item[1]
+            if item_region == plugin_region:
+                selected_region[0] = item
+            return item
+
+        region_list = sorted([
+            (item['snippet']['name'], item['snippet']['gl'])
+            for item in items
+        ], key=_get_selected_region)
+
+        if selected_region[0]:
+            selected_region = region_list.index(selected_region[0])
+        else:
+            selected_region = None
+
+        region_id = ui.on_select(
+            localize('setup_wizard.locale.region'),
+            region_list,
+            preselect=selected_region
+        )
+        if region_id == -1:
+            return
+
+        # set new language id and region id
+        settings = context.get_settings()
+        settings.set_language(language_id)
+        settings.set_region(region_id)
+
+
+def _maintenance_actions(context, action, params):
+    target = params.get('target')
+
     ui = context.get_ui()
     localize = context.localize
 
     if action == 'clear':
-        if target == 'function_cache':
-            if ui.on_remove_content(localize('cache.function')):
-                context.get_function_cache().clear()
-                ui.show_notification(localize('succeeded'))
-        elif target == 'data_cache':
-            if ui.on_remove_content(localize('cache.data')):
-                context.get_data_cache().clear()
-                ui.show_notification(localize('succeeded'))
-        elif target == 'search_cache':
-            if ui.on_remove_content(localize('search.history')):
-                context.get_search_history().clear()
-                ui.show_notification(localize('succeeded'))
-        elif (target == 'playback_history' and ui.on_remove_content(
-            localize('playback.history')
-        )):
-            context.get_playback_history().clear()
+        targets = {
+            'bookmarks': context.get_bookmarks_list,
+            'data_cache': context.get_data_cache,
+            'feed_history': context.get_feed_history,
+            'function_cache': context.get_function_cache,
+            'playback_history': context.get_playback_history,
+            'search_history': context.get_search_history,
+            'watch_later': context.get_watch_later_list,
+        }
+        if target not in targets:
+            return
+
+        if ui.on_clear_content(localize('maintenance.{0}'.format(target))):
+            targets[target]().clear()
+            ui.show_notification(localize('completed'))
+
+    elif action == 'refresh':
+        targets = {
+            'settings_xml': 'settings.xml',
+        }
+        path = targets.get(target)
+        if not path:
+            return
+
+        if target == 'settings_xml' and ui.on_yes_no_input(
+                context.get_name(), localize('refresh.settings.check')
+        ):
+            if not context.get_system_version().compatible(20):
+                ui.show_notification(localize('failed'))
+                return
+
+            import xml.etree.ElementTree as ET
+
+            path = xbmcvfs.translatePath(os.path.join(DATA_PATH, path))
+            xml = ET.parse(path)
+            settings = xml.getroot()
+
+            marker = settings.find('setting[@id="|end_settings_marker|"]')
+            if marker is None:
+                ui.show_notification(localize('failed'))
+                return
+
+            removed = 0
+            for setting in reversed(settings.findall('setting')):
+                if setting == marker:
+                    break
+                settings.remove(setting)
+                removed += 1
+            else:
+                ui.show_notification(localize('failed'))
+                return
+
+            if removed:
+                xml.write(path)
             ui.show_notification(localize('succeeded'))
+        else:
+            return
 
     elif action == 'delete':
-        _maint_files = {'function_cache': 'cache.sqlite',
-                        'search_cache': 'search.sqlite',
-                        'data_cache': 'data_cache.sqlite',
-                        'playback_history': 'playback_history',
-                        'settings_xml': 'settings.xml',
-                        'api_keys': 'api_keys.json',
-                        'access_manager': 'access_manager.json',
-                        'temp_files': TEMP_PATH}
-        _file = _maint_files.get(target)
-        succeeded = False
-
-        if not _file:
+        path = params.get('path')
+        targets = {
+            'bookmarks': 'bookmarks.sqlite',
+            'data_cache': 'data_cache.sqlite',
+            'feed_history': 'feeds.sqlite',
+            'function_cache': 'cache.sqlite',
+            'playback_history': 'history.sqlite',
+            'search_history': 'search.sqlite',
+            'watch_later': 'watch_later.sqlite',
+            'api_keys': 'api_keys.json',
+            'access_manager': 'access_manager.json',
+            'settings_xml': 'settings.xml',
+            'temp_dir': (TEMP_PATH,),
+            'other_file': ('', path) if path else None,
+            'other_dir': (path,) if path else None,
+        }
+        path = targets.get(target)
+        if not path:
             return
 
-        data_path = xbmcvfs.translatePath(DATA_PATH)
-        if 'sqlite' in _file:
-            _file_w_path = os.path.join(data_path, 'kodion', _file)
-        elif target == 'temp_files':
-            _file_w_path = _file
-        elif target == 'playback_history':
-            _file = ''.join((
+        if target == 'temp_dir':
+            target = path[0]
+        elif target == 'other_dir':
+            target = os.path.basename(os.path.dirname(path[0]))
+        elif target == 'other_file':
+            target = os.path.basename(path[1])
+        else:
+            target = path
+        if not ui.on_delete_content(target):
+            return
+
+        if isinstance(path, tuple):
+            pass
+        elif path.endswith('.sqlite'):
+            path = (
+                DATA_PATH,
                 context.get_access_manager().get_current_user_id(),
-                '.sqlite'
-            ))
-            _file_w_path = os.path.join(data_path, 'playback', _file)
+                path,
+            )
         else:
-            _file_w_path = os.path.join(data_path, _file)
+            path = (
+                DATA_PATH,
+                path,
+            )
 
-        if not ui.on_delete_content(_file):
-            return
-
-        if target == 'temp_files':
-            succeeded = rm_dir(_file_w_path)
-
-        elif _file_w_path:
-            succeeded = xbmcvfs.delete(_file_w_path)
-
-        if succeeded:
-            ui.show_notification(localize('succeeded'))
+        if len(path) == 1:
+            succeeded = rm_dir(path[0])
         else:
-            ui.show_notification(localize('failed'))
+            succeeded = xbmcvfs.delete(os.path.join(*path))
+        ui.show_notification(localize('succeeded' if succeeded else 'failed'))
 
 
-def _user_actions(action, params):
-    context = XbmcContext()
+def _user_actions(context, action, params):
     if params:
-        context.parse_params(dict(parse_qsl(params)))
+        context.parse_params(params)
+
     localize = context.localize
     access_manager = context.get_access_manager()
     ui = context.get_ui()
+    reload = False
 
     def select_user(reason, new_user=False):
         current_users = access_manager.get_users()
@@ -215,8 +374,6 @@ def _user_actions(action, params):
             localize('user.changed') % access_manager.get_username(user),
             localize('user.switch')
         )
-        if context.get_param('refresh') is not False:
-            ui.refresh_container()
 
     if action == 'switch':
         result, user_index_map = select_user(localize('user.switch'),
@@ -230,6 +387,7 @@ def _user_actions(action, params):
 
         if user is not None and user != access_manager.get_current_user():
             switch_to_user(user)
+            reload = True
 
     elif action == 'add':
         user, details = add_user()
@@ -240,6 +398,7 @@ def _user_actions(action, params):
             )
             if result:
                 switch_to_user(user)
+                reload = True
 
     elif action == 'remove':
         result, user_index_map = select_user(localize('user.remove'))
@@ -250,13 +409,14 @@ def _user_actions(action, params):
         username = access_manager.get_username(user)
         if ui.on_remove_content(username):
             access_manager.remove_user(user)
+            ui.show_notification(localize('removed') % username,
+                                 localize('remove'))
             if user == 0:
                 access_manager.add_user(username=localize('user.default'),
                                         user=0)
             if user == access_manager.get_current_user():
-                access_manager.set_user(0, switch_to=True)
-            ui.show_notification(localize('removed') % username,
-                                 localize('remove'))
+                switch_to_user(0)
+            reload = True
 
     elif action == 'rename':
         result, user_index_map = select_user(localize('user.rename'))
@@ -280,40 +440,62 @@ def _user_actions(action, params):
                 localize('renamed') % (old_username, new_username),
                 localize('rename')
             )
+        reload = True
 
+    if reload:
+        ui.set_property(RELOAD_ACCESS_MANAGER)
+        context.send_notification(RELOAD_ACCESS_MANAGER)
     return True
 
 
 def run(argv):
-    args = argv[1:]
-    if args:
-        args = args[0].split('/')
+    context = XbmcContext()
+    ui = context.get_ui()
+    try:
+        category = action = params = None
+        args = argv[1:]
+        if args:
+            args = urlsplit(args[0])
 
-    num_args = len(args)
-    if num_args > 2:
-        category, action, params = args[:3]
-    elif num_args == 2:
-        category, action = args
-        params = None
-    elif num_args:
-        category = args[0]
-        action = params = None
-    else:
-        xbmcaddon.Addon().openSettings()
-        return
+            path = args.path.rstrip('/')
+            if path:
+                path = path.split('/')
+                category = path[0]
+                if len(path) >= 2:
+                    action = path[1]
 
-    if action == 'refresh':
-        xbmc.executebuiltin('Container.Refresh')
-        return
+            params = args.query
+            if params:
+                params = dict(parse_qsl(args.query))
 
-    if category == 'config':
-        _config_actions(action, params)
-        return
+        system_version = context.get_system_version()
+        context.log_notice('Script: Running v{version}'
+                           '\n\tKodi:     v{kodi}'
+                           '\n\tPython:   v{python}'
+                           '\n\tCategory: |{category}|'
+                           '\n\tAction:   |{action}|'
+                           '\n\tParams:   |{params}|'
+                           .format(version=context.get_version(),
+                                   kodi=str(system_version),
+                                   python=system_version.get_python_version(),
+                                   category=category,
+                                   action=action,
+                                   params=params))
 
-    if category == 'maintenance':
-        _maintenance_actions(action, params)
-        return
+        if not category:
+            xbmcaddon.Addon().openSettings()
+            return
 
-    if category == 'users':
-        _user_actions(action, params)
-        return
+        if category == 'config':
+            _config_actions(context, action, params)
+            return
+
+        if category == 'maintenance':
+            _maintenance_actions(context, action, params)
+            return
+
+        if category == 'users':
+            _user_actions(context, action, params)
+            return
+    finally:
+        ui.set_property(WAIT_END_FLAG)
