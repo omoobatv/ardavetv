@@ -358,7 +358,7 @@ version 0.2.0
 </extension>
 </addon>
 
-<addon id="repository.ardavetv" name="Ardave TV" version="1.2.4" provider-name="Moshii">
+<addon id="repository.ardavetv" name="Ardave TV" version="1.2.5" provider-name="Moshii">
     <extension point="xbmc.addon.repository" name="ArdaveTV Kodi Repo">
         <dir minversion="18.0.0" maxversion="18.9.9">
             <info compressed="false">https://raw.githubusercontent.com/omoobatv/ardavetv/master/leia/zips/addons.xml</info>
@@ -370,7 +370,7 @@ version 0.2.0
             <checksum>https://raw.githubusercontent.com/omoobatv/ardavetv/master/matrix/zips/addons.xml.md5</checksum>
             <datadir zip="true">https://raw.githubusercontent.com/omoobatv/ardavetv/master/matrix/zips/</datadir>
         </dir>
-        <dir minversion="20.0.0" maxversion="20.9.9">
+        <dir minversion="20.0.0">
             <info compressed="false">https://raw.githubusercontent.com/omoobatv/ardavetv/master/nexus/zips/addons.xml</info>
             <checksum>https://raw.githubusercontent.com/omoobatv/ardavetv/master/nexus/zips/addons.xml.md5</checksum>
             <datadir zip="true">https://raw.githubusercontent.com/omoobatv/ardavetv/master/nexus/zips/</datadir>
