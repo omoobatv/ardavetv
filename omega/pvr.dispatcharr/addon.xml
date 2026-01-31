@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<addon id="pvr.dispatcharr" version="1.2.3" name="Dispatcharr PVR Client" provider-name="northernpowerhouse">
+  <requires></requires>
+  <extension
+    point="kodi.pvrclient"
+    library_windows="pvr.dispatcharr.dll"
+    library_osx="pvr.dispatcharr.dylib"
+    library_linux="pvr.dispatcharr.so.10"
+    library_android="libpvr.dispatcharr.so"/>
+  <extension point="xbmc.addon.metadata">
+    <summary lang="en_GB">Dispatcharr PVR Client</summary>
+    <description lang="en_GB">Live TV PVR client for Dispatcharr.</description>
+    <license>GPL-2.0-or-later</license>
+    <platform>all</platform>
+    <assets>
+      <icon>icon.png</icon>
+      <logo>logo.png</logo>
+      <fanart>fanart.png</fanart>
+    </assets>
+  </extension>
+</addon>
