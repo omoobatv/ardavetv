@@ -1620,7 +1620,7 @@ v1.20.0
     </extension>
 </addon>
 
-<addon id="skin.myqq" version="3.0.12" name="My QQ" provider-name="Mosii">
+<addon id="skin.myqq" version="3.0.13" name="My QQ" provider-name="Mosii">
 	<requires>
 		<import addon="xbmc.gui" version="5.17.0"/>
 	</requires>
