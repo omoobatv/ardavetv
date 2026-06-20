@@ -657,7 +657,7 @@ version 0.2.0
 	</extension>
 </addon>
 
-<addon id="plugin.program.omobatvwizard19" name="[COLOR limegreen]OmobaTV[/COLOR] Wizard" version="2.0.1" provider-name="OmobaTV">
+<addon id="plugin.program.omobatvwizard19" name="[COLOR limegreen]OmobaTV[/COLOR] Wizard" version="2.0.2" provider-name="OmobaTV">
     <requires>
         <import addon="xbmc.python" version="3.0.0" />
         <import addon="script.module.requests" />
@@ -1643,42 +1643,6 @@ v1.20.0
     </extension>
 </addon>
 
-<addon id="skin.myqq" version="3.4" name="My QQ" provider-name="Mosii">
-	<requires>
-		<import addon="xbmc.gui" version="5.17.0"/>
-	</requires>
-	<extension point="xbmc.gui.skin" debugging="false">
-		<res width="1920" height="1440" aspect="4:3" default="false" folder="xml" />
-		<res width="1920" height="1280" aspect="3:2" default="false" folder="xml" />
-		<res width="1920" height="1200" aspect="16:10" default="false" folder="xml" />
-		<res width="2040" height="1080" aspect="17:9" default="false" folder="xml" />
-		<res width="1920" height="1080" aspect="16:9" default="true" folder="xml" />
-		<res width="2560" height="1080" aspect="21:9" default="false" folder="xml" />
-		<res width="2338" height="1080" aspect="19.5:9" default="false" folder="xml" />
-		<res width="2160" height="1080" aspect="18:9" default="false" folder="xml" />
-	</extension>
-	<extension point="xbmc.addon.metadata">
-		<platform>all</platform>
-		<license>CC BY-SA 4.0, GNU GENERAL PUBLIC LICENSE Version 2.0</license>
-		<forum>http://forum.kodi.tv/</forum>
-		<source>https://github.com/xbmc/skin.estuary/</source>
-		<assets>
-			<icon>resources/icon.png</icon>
-			<fanart>resources/fanart.jpg</fanart>
-			<screenshot>resources/screenshot-01.jpg</screenshot>
-			<screenshot>resources/screenshot-02.jpg</screenshot>
-			<screenshot>resources/screenshot-03.jpg</screenshot>
-			<screenshot>resources/screenshot-04.jpg</screenshot>
-			<screenshot>resources/screenshot-05.jpg</screenshot>
-			<screenshot>resources/screenshot-06.jpg</screenshot>
-			<screenshot>resources/screenshot-07.jpg</screenshot>
-			<screenshot>resources/screenshot-08.jpg</screenshot>
-		</assets>
-		<summary lang="en_gb">Sky Q MOD of Estuary skin by Moshii.</summary>
-		<description lang="en_gb">Sky Q skin is a MOD of Estuary to make it look so much like a popular UK TV.</description>
-	</extension>
-</addon>
-
 <addon id="plugin.audio.soundcloud" name="SoundCloud" version="4.0.0" provider-name="jaylinski">
     <requires>
         <import addon="xbmc.python" version="3.0.0"/>
@@ -1806,6 +1770,39 @@ Added support for Kodi v19 (Matrix)
 [COLOR yellow]--[/COLOR][I] Fixed issue with "check for updates" using old github url.[/I]
 		</news>
 	</extension>
+</addon>
+
+<addon id="plugin.program.omobatvwizard19" name="[COLOR limegreen]OmobaTV[/COLOR] Wizard" version="2.0.1" provider-name="OmobaTV">
+    <requires>
+        <import addon="xbmc.python" version="3.0.0" />
+        <import addon="script.module.requests" />
+        <import addon="script.module.six" />
+        <import addon="script.kodi.android.update" optional="true" version="1.1.7" />
+        <import addon="script.speedtester" optional="true" version="1.1.2" />
+    </requires>
+
+    <extension point="xbmc.python.pluginsource" library="default.py">
+    <provides>executable</provides>
+    </extension>
+
+    <extension point="xbmc.service" library="startup.py" start="startup" />
+
+    <extension point="xbmc.addon.metadata">
+      <summary lang="en">[COLOR limegreen]OmobaTV[/COLOR] Wizard</summary>
+      <description lang="en">[COLOR limegreen]OmobaTV[/COLOR] Wizard offers many maintenance features and automated build installs from OmobaTV.</description>
+        <platform>all</platform>
+        <reuselanguageinvoker>false</reuselanguageinvoker>
+        <source>https://www.github.com/</source>
+        <news>
+         2.0.1
+         - Fanart Updated
+         - Initial Commit
+        </news>
+        <assets>
+            <icon>icon.png</icon>
+            <fanart>fanart.jpg</fanart>
+        </assets>
+    </extension>
 </addon>
 
 <addon id="plugin.video.seren" version="3.1.0" name="Seren" provider-name="Nixgates">

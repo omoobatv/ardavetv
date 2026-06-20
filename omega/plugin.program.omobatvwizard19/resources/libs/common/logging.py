@@ -32,16 +32,19 @@ from resources.libs.common.config import CONFIG
 
 try:  # Python 3
     from urllib.parse import urlencode
-    from urllib.request import FancyURLopener
+    from urllib.request import Request
+    from urllib.request import urlopen
 except ImportError:  # Python 2
     from urllib import urlencode
-    from urllib import FancyURLopener
+    from urllib2 import Request
+    from urllib2 import urlopen
 
 
 URL = 'https://paste.ubuntu.com/'
 EXPIRATION = 2592000
 REPLACES = (('//.+?:.+?@', '//USER:PASSWORD@'), ('<user>.+?</user>', '<user>USER</user>'), ('<pass>.+?</pass>',
                                                                                             '<pass>PASSWORD</pass>'),)
+LOGNOTICE = getattr(xbmc, 'LOGNOTICE', xbmc.LOGINFO)
 
 
 def log(msg, level=xbmc.LOGDEBUG):
@@ -50,7 +53,7 @@ def log(msg, level=xbmc.LOGDEBUG):
     if CONFIG.DEBUGLEVEL == '1':  # Normal Logging
         pass
     if CONFIG.DEBUGLEVEL == '2':  # Full Logging
-        level = xbmc.LOGNOTICE
+        level = LOGNOTICE
     
     xbmc.log('{0}: {1}'.format(CONFIG.ADDONTITLE, msg), level)
     if CONFIG.ENABLEWIZLOG == 'true':
@@ -252,7 +255,7 @@ def post_log(data, name):
         return False, a
 
     try:
-        page_url = page.url.strip()
+        page_url = page.geturl().strip() if hasattr(page, 'geturl') else page.url.strip()
         # copy_to_clipboard(page_url)
         log("URL for {0}: {1}".format(name, page_url))
         return True, page_url
@@ -314,8 +317,13 @@ def copy_to_clipboard(txt):
         # return False, "Error Sending Email."
 
 
-class LogURLopener(FancyURLopener):
+class LogURLopener(object):
     version = '{0}: {1}'.format(CONFIG.ADDON_ID, CONFIG.ADDON_VERSION)
+
+    def open(self, url, params=None):
+        data = params.encode('utf-8') if isinstance(params, str) else params
+        request = Request(url, data=data, headers={'User-Agent': self.version})
+        return urlopen(request)
 
 
 def show_result(message, url=None):
@@ -335,7 +343,7 @@ def show_result(message, url=None):
             except:
                 pass
         except Exception as e:
-            log(str(e), xbmc.LOGNOTICE)
+            log(str(e), LOGNOTICE)
             confirm = dialog.ok(CONFIG.ADDONTITLE, "[COLOR %s]%s[/COLOR]" % (CONFIG.COLOR2, message))
     else:
         confirm = dialog.ok(CONFIG.ADDONTITLE, "[COLOR %s]%s[/COLOR]" % (CONFIG.COLOR2, message))

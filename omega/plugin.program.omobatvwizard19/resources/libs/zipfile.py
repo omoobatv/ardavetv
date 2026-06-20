@@ -434,15 +434,15 @@ class ZipInfo (object):
                 idx = 0
 
                 # ZIP64 extension (large files and/or large archives)
-                if self.file_size in (0xffffffffffffffffL, 0xffffffffL):
+                if self.file_size in (0xffffffffffffffff, 0xffffffff):
                     self.file_size = counts[idx]
                     idx += 1
 
-                if self.compress_size == 0xFFFFFFFFL:
+                if self.compress_size == 0xFFFFFFFF:
                     self.compress_size = counts[idx]
                     idx += 1
 
-                if self.header_offset == 0xffffffffL:
+                if self.header_offset == 0xffffffff:
                     old = self.header_offset
                     self.header_offset = counts[idx]
                     idx+=1
@@ -1174,7 +1174,7 @@ class ZipFile(object):
         if isdir:
             arcname += '/'
         zinfo = ZipInfo(arcname, date_time)
-        zinfo.external_attr = (st[0] & 0xFFFF) << 16L      # Unix attributes
+        zinfo.external_attr = (st[0] & 0xFFFF) << 16      # Unix attributes
         if isdir:
             zinfo.compress_type = ZIP_STORED
         elif compress_type is None:
@@ -1328,7 +1328,7 @@ class ZipFile(object):
 
                     if zinfo.header_offset > ZIP64_LIMIT:
                         extra.append(zinfo.header_offset)
-                        header_offset = 0xffffffffL
+                        header_offset = 0xffffffff
                     else:
                         header_offset = zinfo.header_offset
 
