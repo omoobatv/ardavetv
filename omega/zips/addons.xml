@@ -1023,6 +1023,62 @@ v1.20.0
 </addon>
 
 <addon
+    id="pvr.dispatcharr-unofficial"
+    version="0.11.0"
+    name="Dispatcharr PVR Client (Unofficial)"
+    provider-name="BruiserBrody17">
+  <requires>
+
+<import addon="kodi.binary.global.main" minversion="2.0.0" version="2.0.2"/>
+<import addon="kodi.binary.global.general" minversion="1.0.4" version="1.0.5"/>
+<import addon="kodi.binary.instance.pvr" minversion="8.2.0" version="8.3.0"/>
+    <!--
+      Not a hard dependency: this addon works fully without it (Off and
+      Server-side live-TV pause/rewind, plus completed/in-progress
+      recording playback, need nothing beyond Kodi's own PVR API). Listed
+      as optional so Kodi surfaces the relationship in this addon's own
+      info metadata without forcing an install: inputstream.ffmpegdirect
+      is only actually used if the user opts into "Local" live-TV
+      pause/rewind (live_timeshift_mode) or the experimental catch-up seek
+      setting, and per Kodi's own CAddonInstallJob::CheckDependencies() /
+      Install() (xbmc/addons/AddonInstaller.cpp, confirmed by reading
+      Kodi's current source), a missing optional dependency never blocks
+      or fails an install the way a missing required one would; making
+      this required instead would mean this addon fails to install
+      outright for anyone whose enabled repositories don't have
+      inputstream.ffmpegdirect available, even if they'd never touch
+      either feature that needs it. (Note for future edits: XML comments
+      may not contain a literal double hyphen anywhere in the body, not
+      just at the delimiters; this project's usual prose style uses a
+      double hyphen as a separator, which breaks strict XML parsers like
+      xmlstarlet; CoreELEC's build caught this live. Use a colon,
+      semicolon, or single hyphen inside any addon.xml.in comment instead.)
+    -->
+    <import addon="inputstream.ffmpegdirect" version="3.0.0" optional="true"/>
+  </requires>
+  <extension
+      point="kodi.pvrclient"
+      library_android="libpvr.dispatcharr-unofficial.so"/>
+  <extension point="xbmc.addon.metadata">
+    <summary lang="en_GB">Unofficial Kodi Live TV and DVR client for Dispatcharr</summary>
+    <description lang="en_GB">
+      Connects Kodi's Live TV / PVR features directly to a self-hosted
+      Dispatcharr instance: live channels, EPG, and DVR (scheduled and
+      series recordings) using Dispatcharr's own backend, not a
+      third-party compatibility layer. This is an unofficial,
+      community-maintained addon; it is not affiliated with, endorsed
+      by, or supported by the Dispatcharr project or by Kodi/Team Kodi.
+    </description>
+    <platform>android-armv7</platform>
+    <license>GPL-2.0-or-later</license>
+    <source>https://github.com/BruiserBrody17/pvr.dispatcharr-unofficial</source>
+    <assets>
+      <icon>resources/icon.png</icon>
+    </assets>
+  </extension>
+</addon>
+
+<addon
   id="skin.xonfluence"
   version="4.1.5"
   name="Xonfluence"

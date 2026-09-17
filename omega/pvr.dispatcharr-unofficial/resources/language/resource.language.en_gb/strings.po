@@ -1,0 +1,414 @@
+# Kodi Media Center language file
+# Addon Name: Dispatcharr PVR Client
+# Addon id: pvr.dispatcharr-unofficial
+# Addon Provider: BruiserBrody17
+msgid ""
+msgstr ""
+
+msgctxt "#30000"
+msgid "Connection"
+msgstr ""
+
+msgctxt "#30001"
+msgid "Dispatcharr host / IP address"
+msgstr ""
+
+msgctxt "#30002"
+msgid "Hostname or IP address of your Dispatcharr server, without http:// or a port."
+msgstr ""
+
+msgctxt "#30003"
+msgid "Port"
+msgstr ""
+
+msgctxt "#30004"
+msgid "Dispatcharr's web/API port (default 9191)."
+msgstr ""
+
+msgctxt "#30005"
+msgid "Use HTTPS"
+msgstr ""
+
+msgctxt "#30006"
+msgid "Enable if Dispatcharr is served over HTTPS (e.g. behind a reverse proxy)."
+msgstr ""
+
+msgctxt "#30007"
+msgid "Username"
+msgstr ""
+
+msgctxt "#30008"
+msgid "Dispatcharr account username used to obtain an API token."
+msgstr ""
+
+msgctxt "#30009"
+msgid "Password"
+msgstr ""
+
+msgctxt "#30010"
+msgid "Dispatcharr account password used to obtain an API token."
+msgstr ""
+
+msgctxt "#30011"
+msgid "Verify SSL certificate"
+msgstr ""
+
+msgctxt "#30012"
+msgid "Disable only if you use a self-signed certificate you trust."
+msgstr ""
+
+msgctxt "#30013"
+msgid "Connection timeout (seconds)"
+msgstr ""
+
+msgctxt "#30014"
+msgid "How long to wait for Dispatcharr to respond before failing a request."
+msgstr ""
+
+msgctxt "#30020"
+msgid "Live TV / EPG"
+msgstr ""
+
+msgctxt "#30021"
+msgid "EPG refresh interval (hours)"
+msgstr ""
+
+msgctxt "#30022"
+msgid "How often to re-download the XMLTV guide from Dispatcharr."
+msgstr ""
+
+msgctxt "#30023"
+msgid "Channel list refresh interval (hours)"
+msgstr ""
+
+msgctxt "#30024"
+msgid "How often to re-fetch the channel and group list from Dispatcharr."
+msgstr ""
+
+msgctxt "#30027"
+msgid "Live TV pause/rewind (timeshift)"
+msgstr ""
+
+msgctxt "#30028"
+msgid "Off (default): plain live stream, no pause/rewind, works immediately. Local: real pause/rewind buffered on this device via inputstream.ffmpegdirect (must be installed, or live playback fails). Doesn't persist across a Kodi restart or follow you to another device. Server-side: pause/rewind/fast-forward buffered by Dispatcharr via the companion Timeshift Buffer plugin, shared across every device on the account. Needs a Dispatcharr admin account and the plugin's HTTP port reachable from this device. See docs/TIMESHIFT.md for the full comparison."
+msgstr ""
+
+msgctxt "#30035"
+msgid "Recordings"
+msgstr ""
+
+msgctxt "#30038"
+msgid "Recordings/timers refresh interval (minutes)"
+msgstr ""
+
+msgctxt "#30039"
+msgid "How often to ask Kodi to re-check its recordings and timers list on its own, without waiting for a local action (like starting or deleting a recording from this Kodi) to prompt it. Without this, a change made another way -- from a different Kodi install sharing this Dispatcharr account, directly through Dispatcharr itself, or a recording finishing on its own with nothing local to react to it -- would only ever show up after restarting Kodi."
+msgstr ""
+
+msgctxt "#30040"
+msgid "Enable real-time recording/timer updates (experimental)"
+msgstr ""
+
+msgctxt "#30041"
+msgid "Connects to Dispatcharr's own real-time update feed so changes (new/edited recordings and timers) show up in Kodi immediately instead of waiting for the refresh interval above, which still runs as a fallback. Experimental: newer, less-tested networking code -- leave off if unsure. Needs a Kodi restart to take effect; Kodi will prompt you when you save."
+msgstr ""
+
+msgctxt "#30049"
+msgid "Recurring timer: manual timezone offset from UTC (minutes)"
+msgstr ""
+
+msgctxt "#30050"
+msgid "Only used when the timezone setting above is \"Manual\". Set to Dispatcharr's configured system timezone's CURRENT offset from UTC in minutes (e.g. -300 for US Central Daylight Time) -- if that zone observes daylight saving, update this by 60 minutes yourself twice a year, or a recurring timer will fire an hour off. Leave at 0 for UTC. Only affects recurring (day-of-week) timers. See docs/RECURRING_RULES.md for the full explanation."
+msgstr ""
+
+msgctxt "#30051"
+msgid "Off"
+msgstr ""
+
+msgctxt "#30052"
+msgid "Local (this device)"
+msgstr ""
+
+msgctxt "#30053"
+msgid "Server-side (Dispatcharr plugin)"
+msgstr ""
+
+msgctxt "#30054"
+msgid "Recording padding: start early (minutes)"
+msgstr ""
+
+msgctxt "#30055"
+msgid "Mirrors Dispatcharr's own global recording padding (Settings -> DVR) -- there's no per-timer equivalent, so this changes it for every EPG-based recording at once. Doesn't affect recurring (day-of-week) timers. Kept in sync with Dispatcharr's real value on every Kodi restart. Pushing a change here needs a Dispatcharr admin account; with a lesser account it fails silently (logged to kodi.log, nothing shown in the UI). See docs/RECORDINGS.md for details."
+msgstr ""
+
+msgctxt "#30056"
+msgid "Recording padding: stop late (minutes)"
+msgstr ""
+
+msgctxt "#30057"
+msgid "The end-of-recording counterpart to the start-padding setting above -- see its help text for the full explanation (global-only, EPG-based recordings only, kept in sync with Dispatcharr's real value on restart)."
+msgstr ""
+
+msgctxt "#30058"
+msgid "Dispatcharr's configured timezone (for reference)"
+msgstr ""
+
+msgctxt "#30059"
+msgid "Read-only: Dispatcharr's own configured system timezone (IANA name, e.g. \"America/Chicago\"), kept in sync on every restart. Mainly useful as a reference when your zone isn't in the dropdown below and you need to fall back to manual offset entry."
+msgstr ""
+
+msgctxt "#30060"
+msgid "Recurring timer: timezone"
+msgstr ""
+
+msgctxt "#30061"
+msgid "Only affects recurring (day-of-week) timers. Pick the zone matching Dispatcharr's own configured system timezone (shown above) and this addon computes the correct UTC offset automatically, including daylight saving. Auto-selected on every restart when your zone is in this list. If it isn't, choose \"Manual\" and use the offset setting below instead. See docs/RECURRING_RULES.md for details."
+msgstr ""
+
+msgctxt "#30062"
+msgid "Manual (enter offset below)"
+msgstr ""
+
+msgctxt "#30063"
+msgid "America/New_York"
+msgstr ""
+
+msgctxt "#30064"
+msgid "America/Chicago"
+msgstr ""
+
+msgctxt "#30065"
+msgid "America/Denver"
+msgstr ""
+
+msgctxt "#30066"
+msgid "America/Los_Angeles"
+msgstr ""
+
+msgctxt "#30067"
+msgid "America/Anchorage"
+msgstr ""
+
+msgctxt "#30068"
+msgid "America/Phoenix"
+msgstr ""
+
+msgctxt "#30069"
+msgid "Pacific/Honolulu"
+msgstr ""
+
+msgctxt "#30070"
+msgid "America/Toronto"
+msgstr ""
+
+msgctxt "#30071"
+msgid "America/Winnipeg"
+msgstr ""
+
+msgctxt "#30072"
+msgid "America/Edmonton"
+msgstr ""
+
+msgctxt "#30073"
+msgid "America/Vancouver"
+msgstr ""
+
+msgctxt "#30074"
+msgid "America/Halifax"
+msgstr ""
+
+msgctxt "#30075"
+msgid "Europe/London"
+msgstr ""
+
+msgctxt "#30076"
+msgid "Europe/Dublin"
+msgstr ""
+
+msgctxt "#30077"
+msgid "Europe/Paris"
+msgstr ""
+
+msgctxt "#30078"
+msgid "Europe/Berlin"
+msgstr ""
+
+msgctxt "#30079"
+msgid "Europe/Madrid"
+msgstr ""
+
+msgctxt "#30080"
+msgid "Europe/Rome"
+msgstr ""
+
+msgctxt "#30081"
+msgid "Europe/Amsterdam"
+msgstr ""
+
+msgctxt "#30082"
+msgid "Europe/Brussels"
+msgstr ""
+
+msgctxt "#30083"
+msgid "Europe/Helsinki"
+msgstr ""
+
+msgctxt "#30084"
+msgid "Europe/Athens"
+msgstr ""
+
+msgctxt "#30085"
+msgid "Europe/Bucharest"
+msgstr ""
+
+msgctxt "#30086"
+msgid "UTC"
+msgstr ""
+
+msgctxt "#30087"
+msgid "Etc/UTC"
+msgstr ""
+
+msgctxt "#30090"
+msgid "America/Detroit"
+msgstr ""
+
+msgctxt "#30091"
+msgid "America/Indiana/Indianapolis"
+msgstr ""
+
+msgctxt "#30092"
+msgid "America/Boise"
+msgstr ""
+
+msgctxt "#30093"
+msgid "America/Mexico_City"
+msgstr ""
+
+msgctxt "#30094"
+msgid "America/Regina"
+msgstr ""
+
+msgctxt "#30095"
+msgid "Europe/Vienna"
+msgstr ""
+
+msgctxt "#30096"
+msgid "Europe/Zurich"
+msgstr ""
+
+msgctxt "#30097"
+msgid "Europe/Warsaw"
+msgstr ""
+
+msgctxt "#30098"
+msgid "Europe/Prague"
+msgstr ""
+
+msgctxt "#30099"
+msgid "Europe/Stockholm"
+msgstr ""
+
+msgctxt "#30100"
+msgid "Europe/Copenhagen"
+msgstr ""
+
+msgctxt "#30101"
+msgid "Europe/Oslo"
+msgstr ""
+
+msgctxt "#30102"
+msgid "Europe/Budapest"
+msgstr ""
+
+msgctxt "#30103"
+msgid "Europe/Lisbon"
+msgstr ""
+
+msgctxt "#30104"
+msgid "Europe/Riga"
+msgstr ""
+
+msgctxt "#30105"
+msgid "Europe/Vilnius"
+msgstr ""
+
+msgctxt "#30106"
+msgid "Europe/Sofia"
+msgstr ""
+
+msgctxt "#30107"
+msgid "Europe/Kyiv"
+msgstr ""
+
+msgctxt "#30108"
+msgid "Asia/Tokyo"
+msgstr ""
+
+msgctxt "#30109"
+msgid "Asia/Shanghai"
+msgstr ""
+
+msgctxt "#30110"
+msgid "Asia/Hong_Kong"
+msgstr ""
+
+msgctxt "#30111"
+msgid "Asia/Singapore"
+msgstr ""
+
+msgctxt "#30112"
+msgid "Asia/Kolkata"
+msgstr ""
+
+msgctxt "#30113"
+msgid "Asia/Dubai"
+msgstr ""
+
+msgctxt "#30114"
+msgid "Asia/Karachi"
+msgstr ""
+
+msgctxt "#30115"
+msgid "Africa/Johannesburg"
+msgstr ""
+
+msgctxt "#30116"
+msgid "Africa/Lagos"
+msgstr ""
+
+msgctxt "#30117"
+msgid "Dispatcharr account is an admin"
+msgstr ""
+
+msgctxt "#30118"
+msgid "Read-only: whether the configured Dispatcharr account has admin-level access, kept in sync on every restart. Recording pre/post padding below can only be changed by an admin account -- Dispatcharr rejects the write otherwise -- so this addon greys those settings out automatically when this reads No."
+msgstr ""
+
+msgctxt "#30047"
+msgid "Improve catch-up seek reliability (experimental)"
+msgstr ""
+
+msgctxt "#30048"
+msgid "Experimental: routes catch-up/archive playback through inputstream.ffmpegdirect (must be installed, or catch-up fails outright) instead of Kodi's own seeking. Testing found this consistently slower with no clear precision benefit over the default -- leave off unless you have a specific reason to try it. See docs/CATCHUP.md for details."
+msgstr ""
+
+msgctxt "#30030"
+msgid "Advanced"
+msgstr ""
+
+msgctxt "#30031"
+msgid "Enable verbose debug logging"
+msgstr ""
+
+msgctxt "#30032"
+msgid "Logs full request/response details to the Kodi log. Leave off for normal use."
+msgstr ""
+
+msgctxt "#30033"
+msgid "Dispatcharr API key"
+msgstr ""
+
+msgctxt "#30034"
+msgid "Generated automatically on first connection and used only to play recordings, which Dispatcharr requires authentication for. Leave blank to have one generated for you -- only set this manually if you need to replace it (e.g. it was revoked or regenerated elsewhere), since regenerating one replaces the previous key for the whole account."
+msgstr ""

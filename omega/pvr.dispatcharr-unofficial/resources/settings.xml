@@ -1,0 +1,292 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings version="1">
+  <section id="pvr.dispatcharr-unofficial">
+
+    <category id="connection" label="30000">
+      <group id="1">
+        <setting id="host" type="string" label="30001" help="30002">
+          <level>0</level>
+          <default>127.0.0.1</default>
+          <constraints>
+            <allowempty>false</allowempty>
+          </constraints>
+          <control type="edit" format="string" />
+        </setting>
+        <setting id="port" type="integer" label="30003" help="30004">
+          <level>0</level>
+          <default>9191</default>
+          <constraints>
+            <minimum>1</minimum>
+            <maximum>65535</maximum>
+          </constraints>
+          <control type="edit" format="integer" />
+        </setting>
+        <setting id="use_https" type="boolean" label="30005" help="30006">
+          <level>0</level>
+          <default>false</default>
+          <control type="toggle" />
+        </setting>
+        <setting id="username" type="string" label="30007" help="30008">
+          <level>0</level>
+          <default></default>
+          <constraints>
+            <allowempty>true</allowempty>
+          </constraints>
+          <control type="edit" format="string" />
+        </setting>
+        <setting id="password" type="string" label="30009" help="30010">
+          <level>0</level>
+          <default></default>
+          <constraints>
+            <allowempty>true</allowempty>
+          </constraints>
+          <control type="edit" format="string">
+            <hidden>true</hidden>
+          </control>
+        </setting>
+        <setting id="verify_ssl" type="boolean" label="30011" help="30012">
+          <level>1</level>
+          <default>true</default>
+          <control type="toggle" />
+          <dependencies>
+            <dependency type="enable" setting="use_https">true</dependency>
+          </dependencies>
+        </setting>
+        <setting id="timeout" type="integer" label="30013" help="30014">
+          <level>1</level>
+          <default>30</default>
+          <constraints>
+            <minimum>5</minimum>
+            <maximum>180</maximum>
+          </constraints>
+          <control type="edit" format="integer" />
+        </setting>
+      </group>
+    </category>
+
+    <category id="livetv" label="30020">
+      <group id="1">
+        <setting id="epg_refresh_hours" type="integer" label="30021" help="30022">
+          <level>0</level>
+          <default>4</default>
+          <constraints>
+            <minimum>1</minimum>
+            <maximum>24</maximum>
+          </constraints>
+          <control type="edit" format="integer" />
+        </setting>
+        <setting id="channel_refresh_hours" type="integer" label="30023" help="30024">
+          <level>0</level>
+          <default>12</default>
+          <constraints>
+            <minimum>1</minimum>
+            <maximum>72</maximum>
+          </constraints>
+          <control type="edit" format="integer" />
+        </setting>
+        <setting id="live_timeshift_mode" type="integer" label="30027" help="30028">
+          <level>0</level>
+          <default>0</default>
+          <constraints>
+            <options>
+              <option label="30051">0</option>
+              <option label="30052">1</option>
+              <option label="30053">2</option>
+            </options>
+          </constraints>
+          <control type="list" format="integer" />
+        </setting>
+        <setting id="enable_catchup_ffmpegdirect_seek" type="boolean" label="30047" help="30048">
+          <level>1</level>
+          <default>false</default>
+          <control type="toggle" />
+        </setting>
+      </group>
+    </category>
+
+    <category id="recordings" label="30035">
+      <group id="1">
+        <setting id="recording_refresh_minutes" type="integer" label="30038" help="30039">
+          <level>1</level>
+          <default>5</default>
+          <constraints>
+            <minimum>1</minimum>
+            <maximum>60</maximum>
+          </constraints>
+          <control type="edit" format="integer" />
+        </setting>
+        <setting id="enable_realtime_updates" type="boolean" label="30040" help="30041">
+          <level>0</level>
+          <default>false</default>
+          <control type="toggle" />
+        </setting>
+        <setting id="dispatcharr_timezone_info" type="string" label="30058" help="30059">
+          <level>1</level>
+          <default></default>
+          <constraints>
+            <allowempty>true</allowempty>
+          </constraints>
+          <control type="edit" format="string" />
+          <enable>false</enable>
+        </setting>
+        <setting id="recurring_rule_timezone" type="string" label="30060" help="30061">
+          <level>1</level>
+          <default>manual</default>
+          <constraints>
+            <options>
+              <option label="30062">manual</option>
+              <option label="30063">America/New_York</option>
+              <option label="30064">America/Chicago</option>
+              <option label="30065">America/Denver</option>
+              <option label="30066">America/Los_Angeles</option>
+              <option label="30067">America/Anchorage</option>
+              <option label="30068">America/Phoenix</option>
+              <option label="30069">Pacific/Honolulu</option>
+              <option label="30070">America/Toronto</option>
+              <option label="30071">America/Winnipeg</option>
+              <option label="30072">America/Edmonton</option>
+              <option label="30073">America/Vancouver</option>
+              <option label="30074">America/Halifax</option>
+              <option label="30075">Europe/London</option>
+              <option label="30076">Europe/Dublin</option>
+              <option label="30077">Europe/Paris</option>
+              <option label="30078">Europe/Berlin</option>
+              <option label="30079">Europe/Madrid</option>
+              <option label="30080">Europe/Rome</option>
+              <option label="30081">Europe/Amsterdam</option>
+              <option label="30082">Europe/Brussels</option>
+              <option label="30083">Europe/Helsinki</option>
+              <option label="30084">Europe/Athens</option>
+              <option label="30085">Europe/Bucharest</option>
+              <option label="30086">UTC</option>
+              <option label="30087">Etc/UTC</option>
+              <option label="30090">America/Detroit</option>
+              <option label="30091">America/Indiana/Indianapolis</option>
+              <option label="30092">America/Boise</option>
+              <option label="30093">America/Mexico_City</option>
+              <option label="30094">America/Regina</option>
+              <option label="30095">Europe/Vienna</option>
+              <option label="30096">Europe/Zurich</option>
+              <option label="30097">Europe/Warsaw</option>
+              <option label="30098">Europe/Prague</option>
+              <option label="30099">Europe/Stockholm</option>
+              <option label="30100">Europe/Copenhagen</option>
+              <option label="30101">Europe/Oslo</option>
+              <option label="30102">Europe/Budapest</option>
+              <option label="30103">Europe/Lisbon</option>
+              <option label="30104">Europe/Riga</option>
+              <option label="30105">Europe/Vilnius</option>
+              <option label="30106">Europe/Sofia</option>
+              <option label="30107">Europe/Kyiv</option>
+              <option label="30108">Asia/Tokyo</option>
+              <option label="30109">Asia/Shanghai</option>
+              <option label="30110">Asia/Hong_Kong</option>
+              <option label="30111">Asia/Singapore</option>
+              <option label="30112">Asia/Kolkata</option>
+              <option label="30113">Asia/Dubai</option>
+              <option label="30114">Asia/Karachi</option>
+              <option label="30115">Africa/Johannesburg</option>
+              <option label="30116">Africa/Lagos</option>
+            </options>
+          </constraints>
+          <control type="list" format="string" />
+        </setting>
+        <!-- <dependencies>/<dependency type="enable" setting="...">
+             is the pattern already proven working in this exact file
+             (see verify_ssl above, confirmed live greyed out correctly).
+             Two earlier attempts at the inline eq()-attribute form
+             (both plausible-looking, sourced from reading Kodi's own
+             AddonSettings.cpp) did not actually render as disabled when
+             tested live, for reasons not fully root-caused. Trusting the
+             pattern already confirmed live in this codebase over what
+             the C++ source alone suggested. Only meaningful when the
+             timezone dropdown above is "Manual" (see
+             EffectiveRecurringRuleUtcOffsetMinutes()'s own comment). -->
+        <setting id="recurring_rule_utc_offset_minutes" type="integer" label="30049" help="30050">
+          <level>1</level>
+          <default>0</default>
+          <constraints>
+            <minimum>-720</minimum>
+            <maximum>840</maximum>
+          </constraints>
+          <control type="edit" format="integer" />
+          <dependencies>
+            <dependency type="enable" setting="recurring_rule_timezone">manual</dependency>
+          </dependencies>
+        </setting>
+        <!-- Visible-but-permanently-disabled, same pattern (and same reason)
+             as dispatcharr_timezone_info above: read-only reference so the
+             greyed-out padding fields right below are self-explanatory
+             instead of a silent mystery -- placed directly above them, not
+             next to the unrelated timezone settings, for exactly that
+             reason. <control><hidden>true</hidden></control> (the password
+             field's pattern) only masks a text control's displayed value
+             and does nothing useful on a toggle control (confirmed live,
+             2026-09-09) -- not used here. A first version instead used
+             visible="false" (a real attribute confirmed against Kodi's own
+             source, AddonSettings.cpp) to hide this row entirely, on the
+             reasoning that it's addon-managed state a user shouldn't hand-
+             toggle -- reconsidered: <enable>false</enable> already prevents
+             that (same as the timezone reference field), without also
+             hiding the one piece of context that explains why the padding
+             fields below are disabled. -->
+        <setting id="dispatcharr_is_admin" type="boolean" label="30117" help="30118">
+          <level>1</level>
+          <default>true</default>
+          <control type="toggle" />
+          <enable>false</enable>
+        </setting>
+        <!-- Gated on dispatcharr_is_admin above, same proven <dependencies>
+             pattern as recurring_rule_utc_offset_minutes further up (see
+             that setting's own comment) -- Dispatcharr itself rejects a
+             write to these from a non-admin account (confirmed against its
+             real source, CoreSettingsViewSet's update action requires
+             IsAdmin), so a non-admin account can read the current padding
+             here but not usefully change it. -->
+        <setting id="recording_pre_offset_minutes" type="integer" label="30054" help="30055">
+          <level>0</level>
+          <default>0</default>
+          <constraints>
+            <minimum>0</minimum>
+            <maximum>120</maximum>
+          </constraints>
+          <control type="edit" format="integer" />
+          <dependencies>
+            <dependency type="enable" setting="dispatcharr_is_admin">true</dependency>
+          </dependencies>
+        </setting>
+        <setting id="recording_post_offset_minutes" type="integer" label="30056" help="30057">
+          <level>0</level>
+          <default>0</default>
+          <constraints>
+            <minimum>0</minimum>
+            <maximum>120</maximum>
+          </constraints>
+          <control type="edit" format="integer" />
+          <dependencies>
+            <dependency type="enable" setting="dispatcharr_is_admin">true</dependency>
+          </dependencies>
+        </setting>
+      </group>
+    </category>
+
+    <category id="advanced" label="30030">
+      <group id="1">
+        <setting id="debug_logging" type="boolean" label="30031" help="30032">
+          <level>2</level>
+          <default>false</default>
+          <control type="toggle" />
+        </setting>
+        <setting id="api_key" type="string" label="30033" help="30034">
+          <level>2</level>
+          <default></default>
+          <constraints>
+            <allowempty>true</allowempty>
+          </constraints>
+          <control type="edit" format="string" />
+        </setting>
+      </group>
+    </category>
+
+  </section>
+</settings>
